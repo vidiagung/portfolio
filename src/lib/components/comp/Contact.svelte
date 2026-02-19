@@ -5,6 +5,38 @@
 	import { Input } from '$lib/components/ui/input'
 	import { Textarea } from '$lib/components/ui/textarea'
 	import { Mail, Instagram, LinkedinIcon, Github } from '@lucide/svelte'
+
+	let firstName = ''
+	let lastName = ''
+	let email = ''
+	let message = ''
+	let loading = false
+	let success = false
+
+	async function sendMessage() {
+		loading = true
+
+		const res = await fetch( '/api/contact', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify( {
+				firstName,
+				lastName,
+				email,
+				message
+			} )
+		} )
+
+		loading = false
+
+		if ( res.ok ) {
+			success = true
+			firstName = ''
+			lastName = ''
+			email = ''
+			message = ''
+		}
+	}
 </script>
 
 <section class="flex w-full justify-center px-6 pt-8 pb-16">
@@ -114,10 +146,12 @@
 					<!-- First & Last Name -->
 					<div class="grid gap-4 md:grid-cols-2">
 						<Input
+							bind:value={firstName}
 							placeholder="First Name"
 							class="focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
 						/>
 						<Input
+							bind:value={lastName}
 							placeholder="Last Name"
 							class="focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
 						/>
@@ -125,6 +159,7 @@
 
 					<!-- Email Full Width -->
 					<Input
+						bind:value={email}
 						type="email"
 						placeholder="Email"
 						class="w-full focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -132,12 +167,19 @@
 
 					<!-- Message -->
 					<Textarea
+						bind:value={message}
 						placeholder="Message"
 						class="min-h-35 w-full focus-visible:ring-1 focus-visible:ring-white/10"
 					/>
 
 					<!-- Button -->
-					<Button class="w-full">Send Message</Button>
+					<Button class="w-full" onclick={sendMessage} disabled={loading}>
+						{loading ? 'Sending...' : 'Send Message'}
+					</Button>
+
+					{#if success}
+						<p class="text-center text-green-600">Message Sent Successfully</p>
+					{/if}
 				</CardContent>
 			</Card>
 		</div>
