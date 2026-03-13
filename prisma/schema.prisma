@@ -1,0 +1,159 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// USER
+// ─────────────────────────────────────────────────────────────────────────────
+model User {
+    id        String   @id @default(cuid())
+    email     String   @unique
+    name      String
+    avatar    String?
+    initials  String   @default("")
+    isAdmin   Boolean  @default(false)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    accounts  Account[]
+    messages  Message[]
+    reactions MessageReaction[]
+    presence  Presence?
+    sessions  Session[]
+
+    @@map("users")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ACCOUNT (OAuth Provider)
+// ─────────────────────────────────────────────────────────────────────────────
+model Account {
+    id                String   @id @default(cuid())
+    userId            String
+    provider          String
+    providerAccountId String
+    accessToken       String?  @db.Text
+    refreshToken      String?  @db.Text
+    expiresAt         Int?
+    createdAt         DateTime @default(now())
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([provider, providerAccountId])
+    @@map("accounts")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SESSION
+// ─────────────────────────────────────────────────────────────────────────────
+model Session {
+    id        String   @id @default(cuid())
+    userId    String
+    token     String   @unique @default(cuid())
+    expiresAt DateTime
+    createdAt DateTime @default(now())
+    userAgent String?
+    ipAddress String?
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+    @@index([token])
+    @@map("sessions")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ROOM
+// ─────────────────────────────────────────────────────────────────────────────
+model Room {
+    id          String   @id @default(cuid())
+    name        String   @unique
+    slug        String   @unique
+    description String?
+    isPublic    Boolean  @default(true)
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    messages Message[]
+    presence Presence[]
+
+    @@map("rooms")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MESSAGE
+// ─────────────────────────────────────────────────────────────────────────────
+model Message {
+    id        String    @id @default(cuid())
+    roomId    String
+    userId    String
+    text      String    @db.Text
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+
+    room        Room              @relation(fields: [roomId], references: [id], onDelete: Cascade)
+    user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+    reactions   MessageReaction[]
+    attachments Attachment[]
+
+    @@index([roomId, createdAt])
+    @@index([userId])
+    @@map("messages")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ATTACHMENT
+// ─────────────────────────────────────────────────────────────────────────────
+model Attachment {
+    id        String   @id @default(cuid())
+    messageId String
+    name      String
+    size      String
+    mimeType  String
+    type      String
+    url       String   @db.Text
+    createdAt DateTime @default(now())
+
+    message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+    @@map("attachments")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MESSAGE REACTION
+// ─────────────────────────────────────────────────────────────────────────────
+model MessageReaction {
+    id        String   @id @default(cuid())
+    messageId String
+    userId    String
+    emoji     String
+    createdAt DateTime @default(now())
+
+    message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+    user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([messageId, userId, emoji])
+    @@index([messageId])
+    @@map("message_reactions")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRESENCE
+// ─────────────────────────────────────────────────────────────────────────────
+model Presence {
+    id         String   @id @default(cuid())
+    userId     String   @unique
+    roomId     String?
+    isOnline   Boolean  @default(false)
+    lastSeenAt DateTime @default(now())
+
+    user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+    room Room? @relation(fields: [roomId], references: [id], onDelete: SetNull)
+
+    @@map("presence")
+}
