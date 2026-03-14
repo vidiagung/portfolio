@@ -88,21 +88,17 @@ model Room {
 // MESSAGE
 // ─────────────────────────────────────────────────────────────────────────────
 model Message {
-    id        String    @id @default(cuid())
-    roomId    String
+    id        String   @id @default(cuid())
+    content   String
     userId    String
-    text      String    @db.Text
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
-    deletedAt DateTime?
+    roomId    String
+    createdAt DateTime @default(now())
 
-    room        Room              @relation(fields: [roomId], references: [id], onDelete: Cascade)
-    user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-    reactions   MessageReaction[]
-    attachments Attachment[]
+    user             User              @relation(fields: [userId], references: [id])
+    room             Room              @relation(fields: [roomId], references: [id])
+    attachments      Attachment[]
+    messageReactions MessageReaction[]
 
-    @@index([roomId, createdAt])
-    @@index([userId])
     @@map("messages")
 }
 

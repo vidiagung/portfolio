@@ -1,6 +1,7 @@
 <script lang="ts">
 	const { data } = $props()
 
+	import { onMount } from 'svelte'
 	import { Separator } from '$lib/components/ui/separator'
 	import { Button } from '$lib/components/ui/button'
 	import { Textarea } from '$lib/components/ui/textarea'
@@ -50,7 +51,7 @@
 	type Reaction = { emoji: string; count: number };
 	type Attachment = { name: string; size: string; type: string };
 	type Message = {
-		id: number;
+		id: string;
 		author: string;
 		initials: string;
 		color: string;
@@ -62,80 +63,73 @@
 		online?: boolean;
 	};
 
+	type DBMessage = {
+		id: string;
+		text: string;
+		createdAt: string;
+		user: {
+			name: string;
+			initials: string;
+		};
+	};
+
 	// ── Seed data ────────────────────────────────────────────────────────────────
-	const defaultMessages: Message[] = [
-		{
-			id: 1,
-			author: 'Arya Setiawan',
-			initials: 'AR',
-			color: '#7c3aed',
-			time: '09:12',
-			isAdmin: true,
-			online: true,
-			text: 'Selamat pagi semua 👋 Ada yang sudah coba stack baru kita? SvelteKit + Neon DB terasa sangat smooth!',
-			reactions: [
-				{ emoji: '👏', count: 5 },
-				{ emoji: '🔥', count: 3 }
-			]
-		},
-		{
-			id: 2,
-			author: 'Arya Setiawan',
-			initials: 'AR',
-			color: '#7c3aed',
-			time: '09:13',
-			text: 'Btw untuk auth, kita pakai Lucia v3 ya. Lebih clean dibanding yang sebelumnya.'
-		},
-		{
-			id: 3,
-			author: 'Dika Pratama',
-			initials: 'DK',
-			color: '#059669',
-			time: '09:18',
-			online: false,
-			text: 'Udah nyoba! Neon DB cold start-nya kenceng banget sekarang. Prisma juga udah smooth sama @prisma/adapter-neon 🎉'
-		},
-		{
-			id: 4,
-			author: 'Bowo Wicaksono',
-			initials: 'BW',
-			color: '#d97706',
-			time: '09:25',
-			online: true,
-			text: 'Ini aku share schema Prisma yang aku buat tadi malam:',
-			attachment: { name: 'schema.prisma', size: '2.4 KB', type: 'Prisma' },
-			reactions: [
-				{ emoji: '👍', count: 4 },
-				{ emoji: '❤️', count: 2 }
-			]
-		},
-		{
-			id: 5,
-			author: 'Sila Rahma',
-			initials: 'SL',
-			color: '#0ea5e9',
-			time: '09:41',
-			online: true,
-			text: 'Dashboard mockup pertama udah jadi nih! Feedback?'
+	let messages: Message[] = $state( [] )
+
+	onMount( async () => {
+		try {
+			const res = await fetch( '/api/messages' )
+
+			if ( !res.ok ) return
+
+			const data: DBMessage[] = await res.json()
+
+			messages = data.map( ( m ) => ( {
+				id: m.id,
+				author: m.user.name,
+				initials: m.user.initials,
+				color: '#e11d48',
+				time: new Date( m.createdAt ).toLocaleTimeString( 'id-ID', {
+					hour: '2-digit',
+					minute: '2-digit'
+				} ),
+				text: m.text,
+				online: true
+			} ) )
+		} catch ( err ) {
+			console.error( 'Failed to load messages', err )
 		}
-	]
+	} )
 
-	let messages: Message[] = $state( [...defaultMessages] )
-
-	function sendMessage() {
+	async function sendMessage() {
 		if ( !user || !inputValue.trim() ) return
+
+		const res = await fetch( '/api/messages', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify( { content: inputValue } )
+		} )
+
+		if ( !res.ok ) return
+
+		const message = await res.json()
+
 		messages = [
 			...messages,
 			{
-				id: Date.now(),
-				author: user.name,
-				initials: user.initials,
+				id: message.id,
+				author: message.user.name,
+				initials: message.user.initials,
 				color: '#e11d48',
-				time: new Date().toLocaleTimeString( 'id-ID', { hour: '2-digit', minute: '2-digit' } ),
-				text: inputValue.trim(),
+				time: new Date( message.createdAt ).toLocaleTimeString( 'id-ID', {
+					hour: '2-digit',
+					minute: '2-digit'
+				} ),
+				text: message.text,
 				online: true
 			}
 		]
+
 		inputValue = ''
 	}
 
