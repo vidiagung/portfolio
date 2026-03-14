@@ -54,6 +54,7 @@
 		id: string;
 		author: string;
 		initials: string;
+		avatar?: string;
 		color: string;
 		time: string;
 		text: string;
@@ -70,6 +71,7 @@
 		user: {
 			name: string;
 			initials: string;
+			avatar?: string;
 		};
 	};
 
@@ -88,6 +90,7 @@
 				id: m.id,
 				author: m.user.name,
 				initials: m.user.initials,
+				avatar: m.user.avatar,
 				color: '#e11d48',
 				time: new Date( m.createdAt ).toLocaleTimeString( 'id-ID', {
 					hour: '2-digit',
@@ -120,6 +123,7 @@
 				id: message.id,
 				author: message.user.name,
 				initials: message.user.initials,
+				avatar: message.user.avatar,
 				color: '#e11d48',
 				time: new Date( message.createdAt ).toLocaleTimeString( 'id-ID', {
 					hour: '2-digit',
@@ -329,24 +333,27 @@
 							{cont ? 'mt-0' : 'mt-4'}"
 						>
 							<!-- Avatar -->
-							<div class="w-9 shrink-0 pt-0.5">
-								{#if !cont}
+							<div class="relative h-9 w-9">
+								{#if msg.avatar}
+									<img
+										src={msg.avatar}
+										alt={msg.author}
+										class="h-9 w-9 rounded-full object-cover"
+									/>
+								{:else}
 									<div
-										class="relative flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white"
+										class="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white"
 										style="background-color: {msg.color};"
 									>
 										<span aria-hidden="true">{msg.initials}</span>
-										<span class="sr-only">{msg.author}</span>
-										{#if msg.online !== undefined}
-											<span
-												aria-label={msg.online ? 'Online' : 'Offline'}
-												class="absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2
-													border-white dark:border-zinc-950
-													{msg.online ? 'bg-emerald-400' : 'bg-zinc-400'}"
-											>
-											</span>
-										{/if}
 									</div>
+								{/if}
+
+								{#if msg.online !== undefined}
+									<span
+										class="absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-zinc-950
+										{msg.online ? 'bg-emerald-400' : 'bg-zinc-400'}"
+									></span>
 								{/if}
 							</div>
 
