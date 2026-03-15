@@ -7,6 +7,7 @@
 	import { Textarea } from '$lib/components/ui/textarea'
 	import * as Dialog from '$lib/components/ui/dialog'
 	import * as ScrollArea from '$lib/components/ui/scroll-area'
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu'
 	import {
 		MessageCircle,
 		LogOut,
@@ -14,8 +15,18 @@
 		SendHorizontal,
 		Lock,
 		Smile,
-		Paperclip
 	} from 'lucide-svelte'
+
+	// ── Emoji - Upload ──────────────────────────────────────────────────────────
+	const emojis = [
+		'😀','😃','😄','😁','😆','😅','🤣','😇',
+		'🙂','🙃','😉','😌','😍','🥰','😏','😣',
+		'🙄','😯','😦','😧','😮','😲','😠','👍',
+		'🤝','👋','🙏','✨','🌟','⚡','🔥','📧',
+	]
+	function addEmoji( e: string ) {
+		inputValue = inputValue + e
+	}
 
 	// ── Auth state ──────────────────────────────────────────────────────────────
 	let showAuthDialog = $state( false )
@@ -459,26 +470,36 @@
 					</Button>
 				{:else}
 					<div class="flex items-center gap-2">
-						<Button
-							variant="ghost"
-							size="icon"
-							aria-label="Tambah emoji"
-							class="shrink-0 p-1 text-zinc-400
-							hover:bg-zinc-200 hover:text-zinc-700
-							dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
-						>
-							<Paperclip class="h-5 w-5" />
-						</Button>
-						<Button
-							variant="ghost"
-							size="icon"
-							aria-label="Tambah emoji"
-							class="shrink-0 p-1 text-zinc-400
-							hover:bg-zinc-200 hover:text-zinc-700
-							dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
-						>
-							<Smile class="h-5 w-5" />
-						</Button>
+						
+						<DropdownMenu.Root>
+							<DropdownMenu.Trigger>
+								<Button
+									variant="ghost"
+									size="icon"
+									aria-label="Tambah emoji"
+									class="shrink-0 p-1 text-zinc-400
+									hover:bg-zinc-200 hover:text-zinc-700
+									dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+								>
+									<Smile class="h-5 w-5 text-black dark:text-white" />
+								</Button>
+							</DropdownMenu.Trigger>
+
+							<DropdownMenu.Content
+								class="grid w-64 grid-cols-8 place-items-center gap-2 p-3"
+								align="start"
+							>
+								{#each emojis as emoji ( emoji )}
+									<Button
+										variant="ghost"
+										class="flex h-8 w-8 items-center justify-center rounded text-lg transition hover:bg-zinc-700"
+										onclick={() => addEmoji( emoji )}
+									>
+										{emoji}
+									</Button>
+								{/each}
+							</DropdownMenu.Content>
+						</DropdownMenu.Root>
 						<Textarea
 							bind:value={inputValue}
 							onkeydown={handleKeydown}
